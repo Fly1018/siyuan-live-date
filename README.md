@@ -69,3 +69,31 @@ Turn on **Debug log** in the plugin settings to record every actual replacement 
 - only `onload` and no `render` → the document is out of scope, or no marker was found;
 - `gate-error` → reading the attribute failed, and the plugin renders anyway;
 - nothing is written while the debug log is off.
+
+## Development & release
+
+**The repository root is the plugin itself** — SiYuan loads `index.js` directly
+(CommonJS, `require("siyuan")`), so there is no build step. See `CHANGELOG.md` for the version history.
+
+```bash
+python3 scripts/pack.py          # validate and build package.zip
+python3 scripts/pack.py --check  # validate only
+```
+
+To publish a new version:
+
+1. bump `version` in `plugin.json` and add an entry to `CHANGELOG.md`;
+2. commit, then push a tag matching that version:
+
+   ```bash
+   git tag v0.6.1 && git push origin v0.6.1
+   ```
+
+3. GitHub Actions verifies the tag matches the manifest version, builds `package.zip`
+   and publishes the release.
+
+The bazaar index picks up new releases within 1–3 hours — **no PR needed**.
+If the bazaar stops updating, check for a `stage-fail` issue in your repo: it is almost
+always a `version` that was not bumped, or a tag that does not match it (the workflow
+blocks that case outright).
+

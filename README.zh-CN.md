@@ -58,3 +58,29 @@
 - 只有 `onload` 没有 `render` → 说明该文档不在生效范围，或没找到标记；
 - 出现 `gate-error` → 读属性失败，此时会"放行"（照常渲染）；
 - 长期稳定后，可以在设置里把调试日志关掉，就不再写这个文件。
+
+## 开发与发版
+
+**仓库根目录就是插件本体**：思源直接加载 `index.js`（CommonJS，`require("siyuan")`），
+不需要编译或构建，改完保存即可生效。完整的版本记录见 `CHANGELOG.md`。
+
+```bash
+python3 scripts/pack.py          # 校验并打出 package.zip
+python3 scripts/pack.py --check  # 只校验，不生成
+```
+
+发版步骤：
+
+1. 改 `plugin.json` 里的 `version`，并在 `CHANGELOG.md` 补一条；
+2. 提交，打一个与版本号一致的 tag 并推送：
+
+   ```bash
+   git tag v0.6.1 && git push origin v0.6.1
+   ```
+
+3. GitHub Actions 会校验 tag 与版本号一致 → 打包 `package.zip` → 发布 Release。
+
+集市索引会在 1–3 小时内自动拉到新版本，**不需要再提 PR**。
+若集市长时间不更新，先看仓库有没有带 `stage-fail` 标签的 issue —— 多半是
+`plugin.json` 的 `version` 没提升，或 tag 与版本号不一致（工作流会直接把这一种拦下来）。
+
