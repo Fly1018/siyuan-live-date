@@ -1,0 +1,17 @@
+{
+  "settingTitle": "动态日期设置",
+  "notebookTitle": "生效笔记本",
+  "notebookDesc": "这些笔记本下的文档不用加属性也会自动刷新日期。点下面的按钮可以把当前文档所在笔记本填进来，改完点确定。",
+  "notebookPlaceholder": "一行一个笔记本 ID，留空表示只靠文档属性生效",
+  "debugTitle": "调试日志",
+  "debugDesc": "把每次实际替换写进 data/storage/petal/siyuan-live-date/debug.json，排障用。",
+  "shortcutTitle": "快捷操作",
+  "shortcutDesc": "把当前文档所在笔记本加入上面的列表。",
+  "addButton": "加入当前文档所在笔记本",
+  "addDone": "已加入：",
+  "addDup": "已在列表里：",
+  "addFail": "读取笔记本 ID 失败",
+  "noDoc": "没有取到当前文档所在的笔记本，请先打开一篇文档",
+  "openSetting": "动态日期：打开设置",
+  "slashTag": "动态日期"
+}
