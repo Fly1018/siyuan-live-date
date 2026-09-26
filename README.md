@@ -1,74 +1,172 @@
 # Live Date (siyuan-live-date)
 
-Keep the date in chosen documents "alive": open the note today and it shows today, tomorrow it shows tomorrow.
-Only the rendering is changed — the stored markdown is untouched.
+**Keep the date in chosen documents alive** — open the note today and it shows today, tomorrow it shows tomorrow. **Only the rendering changes; the stored data does not**, so the file still contains the marker you typed.
 
-## Scope
+SiYuan v3.0.0+ · package `siyuan-live-date` · [repository](https://github.com/Fly1018/siyuan-live-date)
 
-A document is affected when either of these is true:
+## What it does
 
-1. its document block carries the attribute `custom-live-date` (value `on`, or a date format such as
-   `yyyy年MM月dd日`); or
-2. it lives in a notebook listed in the plugin's notebook whitelist — a per-installation list, empty by default, so
-   the document attribute is the portable way to enable a document.
+- **Inline markers**: `@today` renders as today's date (`2026-09-26`), `@now` as the current time (`2026-09-26 12:30:45`)
+- **Block attribute**: give a block the `custom-live-date` attribute and its date is refreshed in the format you specify
+- **Two scopes**: per document via an attribute, or per notebook via a whitelist
+- **Display only**: text nodes in the rendered page are replaced; the `@today` in the block data is untouched
+- **Inline formatting preserved**: `**【@today】**` renders as `【2026-09-26】` — bold and brackets survive
+- **Skips what it should not touch**: code blocks, math blocks, HTML blocks and any non-editable area
 
-To disable a document, set the attribute to `off` / `false` or remove it and reopen the document (the decision is
-cached for 3 s when disabled / 60 s when enabled).
+## When to use it
 
-## Usage
+- A "today" line in daily/weekly note templates: a freshly created daily note shows the current date by itself
+- Dashboards, checklists and habit pages that only need the current date or time
+- Enabling it for **a few documents only** (document attribute) or for **a whole notebook** (whitelist)
+- Custom date formats such as `2026年09月26日` or `2026-09-26 12:30`
 
-### Inline markers (formatting is preserved)
+## Install and enable
 
-- `@today` → `2026-09-26`
-- `@now` → `2026-09-26 12:30:45`
+**Option 1 — from the marketplace (recommended)**
 
-For example `**【@today】**` renders as `【2026-09-26】` — bold and brackets are kept. The slash command `/dqr`
-inserts `【@today】`.
+1. SiYuan → <kbd>Settings</kbd> → <kbd>Marketplace</kbd> → <kbd>Plugins</kbd>, search "Live Date"
+2. Click install
+3. Go to <kbd>Settings</kbd> → <kbd>Marketplace</kbd> → <kbd>Downloaded</kbd> and turn "Live Date" on
 
-### Block attribute
+**Option 2 — manual install**
 
-Give a block whose whole content is a date the attribute `custom-live-date`; the plugin refreshes its first text
-node with the current date. Value empty or `on` → `yyyy-MM-dd`; custom formats are supported, e.g.
-`yyyy年MM月dd日` or `yyyy-MM-dd HH:mm`.
+1. Download `package.zip` from the [latest release](https://github.com/Fly1018/siyuan-live-date/releases/latest)
+2. <kbd>Settings</kbd> → <kbd>Marketplace</kbd> → <kbd>Downloaded</kbd> → install from `package.zip`
+3. Enable it in the same list
 
-Placeholders: `yyyy` `yy` `MM` `dd` `HH` `mm` `ss` `ECN` (weekday). Because the attribute lives in the block data,
-a date that was persisted as plain text (for example when you edited and saved that line) is corrected on the next
-render.
+**Choose the scope** (either one, or both):
+
+- **A single document**: add the attribute `custom-live-date` to the **document block**, with an empty value or `on`
+- **A whole notebook**: <kbd>Settings</kbd> → <kbd>Marketplace</kbd> → <kbd>Downloaded</kbd> → Live Date (gear icon) → fill the notebook IDs into "Enabled notebooks" (one per line), or click **"Add current document's notebook"**
+
+Rendering happens when the document is opened — nothing else to do.
+
+## Requirements
+
+| Item | Requirement |
+| --- | --- |
+| SiYuan version | **v3.0.0 or later** (manifest `minAppVersion: 3.0.0`) |
+| Backends / frontends | The manifest declares all of them (`backends: all`, `frontends: all`) |
+| Dependencies | None. The plugin is a single `index.js` loaded directly by SiYuan — no Node/Python runtime |
+| Network | No network access; it only calls the local kernel API |
+
+> When exporting to PDF/image, in safe mode, or with a remote kernel, the plugin is not loaded at all, so dates are left as-is in those situations.
+
+## Quick start
+
+1. Open a document and add the attribute `custom-live-date` to the **document block**, with an empty value or `on`
+
+2. Type a line in the body:
+
+   ```
+   Today: @today
+   ```
+
+3. Once the document has loaded it shows `Today: 2026-09-26`
+
+4. Try the other two forms:
+
+   - `@now` → `2026-09-26 12:30:45`
+   - type the slash command `/dqr` (or `/live`) → inserts `【@today】`
+
+5. To make a whole block show a date, give that block the `custom-live-date` attribute with a format as its value, e.g. `yyyy年MM月dd日`
+
+If nothing changes, reopen the document once (the scope decision is cached — see "Known limits").
 
 ## Settings
 
-<kbd>Settings</kbd> → <kbd>Marketplace</kbd> → <kbd>Downloaded</kbd> → Live Date (gear icon), or run the command
-"Live Date: open settings" from the command palette.
+<kbd>Settings</kbd> → <kbd>Marketplace</kbd> → <kbd>Downloaded</kbd> → Live Date (gear icon), or search
+"Live Date: open settings" in the command palette.
 
-- **Enabled notebooks** — the whitelist, one notebook ID per line (empty = the document attribute is the only way in)
-- **Debug log** — off by default; when on, every actual replacement is written to
-  `data/storage/petal/siyuan-live-date/debug.json`
-- **Shortcut** — a button that fills in the notebook of the current document
+| Setting | Meaning | Default |
+| --- | --- | --- |
+| **Enabled notebooks** | Notebook whitelist. Documents in these notebooks refresh their dates **without any attribute**. One notebook ID per line; commas or spaces also work. Empty means the document attribute is the only way in | **empty** |
+| **Debug log** | Write every actual replacement into `data/storage/petal/siyuan-live-date/debug.json` (at most 30 entries, flushed every 5 s), for troubleshooting | **off** |
+| **Shortcut** | The "Add current document's notebook" button, which appends the current document's notebook ID to the list above | — |
 
-## Boundaries
+### Attributes and placeholders
 
-1. **Display only** — the file still contains `@today`. If you type in that line and save, SiYuan stores the
-   currently displayed date as content and the marker is gone; type the marker again.
-2. Code blocks, math blocks and HTML blocks are skipped, to avoid polluting data.
-3. Not applied to PDF/image export, safe mode or a remote kernel (plugins are not loaded there).
-4. Rendering happens on document load and 0.6 s after a change, so a freshly opened document may show `@today` for
-   a moment.
-5. Checking the document switch costs one `/api/attr/getBlockAttrs` call, cached for 3 s (not enabled) / 60 s
-   (enabled).
+**Document-block attribute `custom-live-date`** — decides whether this document is in scope: any value **other than** `off` / `false` / `0` (case-insensitive) means enabled. If the attribute is absent, set to one of those three values, or removed, the document is out of scope.
+
+**Ordinary block attribute `custom-live-date`** — decides what date that block shows: the block's **first text node** is replaced entirely with the formatted date. An empty value or `on` uses the default format `yyyy-MM-dd`.
+
+Supported format placeholders:
+
+| Placeholder | Meaning | Example |
+| --- | --- | --- |
+| `yyyy` | four-digit year | `2026` |
+| `yy` | two-digit year | `26` |
+| `MM` | two-digit month | `09` |
+| `dd` | two-digit day | `26` |
+| `HH` | two-digit hour (24-hour) | `12` |
+| `mm` | two-digit minute | `30` |
+| `ss` | two-digit second | `45` |
+| `ECN` | weekday, always the Chinese form 日一二三四五六 | `六` |
+
+If the value contains **any** placeholder it is formatted accordingly; if it contains none, the whole value falls back to the default `yyyy-MM-dd`.
+
+**Inline markers `@today` / `@now`** — these two formats are **fixed and not configurable**: `@today` is `yyyy-MM-dd`, `@now` is `yyyy-MM-dd HH:mm:ss`.
+
+## Advanced usage
+
+### Custom date formats
+
+Just combine placeholders in the `custom-live-date` block attribute:
+
+| Attribute value | Rendered |
+| --- | --- |
+| (empty) or `on` | `2026-09-26` |
+| `yyyy年MM月dd日` | `2026年09月26日` |
+| `yyyy-MM-dd HH:mm` | `2026-09-26 12:30` |
+| `yyyy/MM/dd（ECN）` | `2026/09/26（六）` |
+
+### Slash command
+
+Type `/dqr` or `/live` in the editor; pick the "Live Date `@today`" entry and it inserts `【@today】`.
+
+### Turning it off
+
+- **One document**: remove the `custom-live-date` attribute from the document block, or set it to `off` / `false`, then reopen the document
+- **One notebook**: delete its ID in the settings and click OK (the cache is cleared immediately, no plugin reload needed)
+
+## Known limits
+
+1. **Display only** — the file still contains `@today`. But if you **type in that line and save**, SiYuan stores the currently displayed date as content and the marker is gone; type it again
+2. **The block-attribute mode replaces the whole first text node**: if the block contains other text besides the date (e.g. `Today 2026-01-01`), that text is overwritten too. Use this attribute only on blocks whose entire content is the date
+3. **Markers inside code blocks, math blocks and HTML blocks are not replaced**, to avoid polluting data
+4. Not applied when exporting to PDF/image, in safe mode, or with a remote kernel (the plugin is not loaded there)
+5. Rendering happens on document load and 0.6 s after a change, so a freshly opened document may show `@today` for a moment
+6. Checking whether a document is in scope costs one `/api/attr/getBlockAttrs` call; the result is cached for **3 s (not enabled) / 60 s (enabled)**
 
 ## Troubleshooting
 
-Turn on **Debug log** in the plugin settings to record every actual replacement in
-`data/storage/petal/siyuan-live-date/debug.json` (at most 30 entries, flushed every 5 s):
+**The date does not change**
 
-```json
-["2026-09-26T08:55:32.097Z onload",
- "2026-09-26T08:55:44.055Z render doc=20260926164351-yl4klgk markers=1 attrs=0"]
-```
+1. Make sure the document is in scope: the document block carries `custom-live-date` (not `off` / `false` / `0`), or its notebook is in the settings whitelist
+2. Reopen the document, or wait for the cache to expire (3 s when not enabled / 60 s when enabled)
+3. Turn on the **Debug log** and check `data/storage/petal/siyuan-live-date/debug.json`: if it only contains `onload` and no `render`, the document is out of scope or no marker was found
+4. Make sure that line is not inside a code block, math block or HTML block
 
-- only `onload` and no `render` → the document is out of scope, or no marker was found;
-- `gate-error` → reading the attribute failed, and the plugin renders anyway;
-- nothing is written while the debug log is off.
+**`gate-error` in the debug log**
+
+Reading the document attribute failed, and the plugin deliberately renders anyway. It is a fallback and does not affect normal use. If it happens often, check that SiYuan itself is healthy, or try another document.
+
+**Why does `@today` still show for a moment after opening?**
+
+Rendering runs after the document has loaded, and changes are debounced by 0.6 s, so the raw marker is visible for an instant. This is expected.
+
+**The marker disappeared after I edited that line**
+
+See "Known limits" item 2: when you type in that line and save, SiYuan stores the currently displayed date as content. Type `@today` again. To avoid it, do not edit directly on the line that gets replaced.
+
+**Enable it for a few documents only, or for a whole notebook**
+
+- A few documents → use the **document attribute** (it travels with the document, so it syncs and exports; recommended)
+- A whole notebook → use the **notebook whitelist** (it holds notebook IDs, so it only applies to this device)
+
+**How do I find a notebook ID?**
+
+You do not have to: in the settings click **"Add current document's notebook"** and the ID of the current document's notebook is filled in for you.
 
 ## Development & release
 
@@ -93,7 +191,3 @@ To publish a new version:
    and publishes the release.
 
 The bazaar index picks up new releases within 1–3 hours — **no PR needed**.
-If the bazaar stops updating, check for a `stage-fail` issue in your repo: it is almost
-always a `version` that was not bumped, or a tag that does not match it (the workflow
-blocks that case outright).
-
